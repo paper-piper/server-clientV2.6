@@ -5,7 +5,7 @@ MAX_PACKET = 1024
 SERVER_ADDRESS = ('127.0.0.1', 1729)
 
 # Set up logging
-logging.basicConfig(filename='client.log', level=logging.INFO)
+logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('client')
 
 

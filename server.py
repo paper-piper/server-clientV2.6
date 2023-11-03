@@ -8,7 +8,7 @@ QUEUE_LEN = 1
 SERVER_ADDRESS = ('127.0.0.1', 1729)
 
 # Set up logging
-logging.basicConfig(filename='server.log', level=logging.INFO)
+logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
 
@@ -40,8 +40,8 @@ def main():
         logger.info("Server is listening on %s:%d", SERVER_ADDRESS[0], SERVER_ADDRESS[1])
         # Handle clients forever
         while True:
+            client_socket, client_address = my_socket.accept()
             try:
-                client_socket, client_address = my_socket.accept()
                 logger.info("Accepted connection from %s:%d", client_address[0], client_address[1])
                 handle_messages(client_socket)
             except socket.error as err:
