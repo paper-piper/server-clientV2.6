@@ -2,7 +2,7 @@ import socket
 import threading
 
 MAX_PACKET = 1024
-IP = '0.0.0.0'
+IP = '127.0.0.1'
 PORT = 1729
 
 # List to keep track of client sockets

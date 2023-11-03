@@ -16,5 +16,6 @@ def client():
             response = my_socket.recv(MAX_PACKET).decode()
             print(f"Received: {response}")
 
+
 if __name__ == "__main__":
     client()
