@@ -5,7 +5,7 @@ import random
 
 MAX_PACKET = 1024
 QUEUE_LEN = 1
-SERVER_ADDRESS = ('127.0.0.1', 1729)
+SERVER_ADDRESS = ('0.0.0.0', 1729)
 
 # Set up logging
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -14,22 +14,25 @@ logger = logging.getLogger('server')
 
 def handle_messages(client_socket):
     # Handle client messages until 'exit'
+    response = ""
     while True:
-        client_input = client_socket.recv(MAX_PACKET).decode()
-        if client_input.lower() == 'time':
-            current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            client_socket.send(current_time.encode())
-        elif client_input.lower() == 'name':
-            client_socket.send("My name is Inigo Montoya".encode())
-        elif client_input.lower() == "rand":
-            random_number = str(random.randint(1, 10))
-            client_socket.send(random_number.encode())
-        elif client_input.lower() == 'exit':
+        client_input = client_socket.recv(4).decode()
+        if client_input.lower() == 'exit':
+            client_socket.send("6!exited".encode())
             client_socket.close()
             return
+
+        if client_input.lower() == 'time':
+            response = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        elif client_input.lower() == 'name':
+            response = "My name is Inigo Montoya"
+        elif client_input.lower() == "rand":
+            response = str(random.randint(1, 10))
         else:
-            client_socket.send("You sent an unknown word, please try again or type 'exit' to exit.".encode())
-            logger.warning("Client sent an unknown word: %s", client_input)
+            response = "You sent an unknown word, please try again or type 'exit' to exit."
+            logger.error("Client sent an unknown word: %s", client_input)
+        response = str(len(response)) + "!" + response
+        client_socket.send(response.encode())
 
 
 def main():
@@ -37,12 +40,12 @@ def main():
     try:
         my_socket.bind(SERVER_ADDRESS)
         my_socket.listen(QUEUE_LEN)
-        logger.info("Server is listening on %s:%d", SERVER_ADDRESS[0], SERVER_ADDRESS[1])
+        logger.info(f"Server is listening on {SERVER_ADDRESS[0]}:{SERVER_ADDRESS[1]}")
         # Handle clients forever
         while True:
             client_socket, client_address = my_socket.accept()
             try:
-                logger.info("Accepted connection from %s:%d", client_address[0], client_address[1])
+                logger.info(f"Accepted connection from {client_address[0]}:{client_address[1]}")
                 handle_messages(client_socket)
             except socket.error as err:
                 logger.error('Received error while handling client: %s', err)

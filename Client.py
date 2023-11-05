@@ -9,6 +9,25 @@ logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime
 logger = logging.getLogger('client')
 
 
+def get_message(my_socket):
+    length_str = ""
+    while (char := my_socket.recv(1).decode()) != "!":
+        length_str += char
+    message_len = int(length_str)
+    return my_socket.recv(message_len).decode()
+
+
+def validate_message(message):
+    message = message.lower()  # for easier parsing
+    if len(message) > 4:
+        logger.error(f"Client's message too long ({len(message)})")
+        return False
+    if message in ("time", "name", "rand", "exit"):
+        return True
+    # if message doesn't match any command, return un-valid
+    return False
+
+
 def main():
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -16,14 +35,12 @@ def main():
         message = ""
         while message != "exit":
             message = input("Enter message: ")
-            my_socket.send(message.encode())
-            response = my_socket.recv(MAX_PACKET).decode()
-            print(response)
-        my_socket.close()
+            if validate_message(message):
+                my_socket.send(message.encode())
+                response = get_message(my_socket)
+                print(response)
     except socket.error as err:
         logger.error('Received socket error: %s', err)
-    except KeyboardInterrupt:
-        logger.info("Client was terminated by the user.")
     finally:
         my_socket.close()
         logger.info("Client socket closed.")
