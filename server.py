@@ -1,3 +1,10 @@
+"""
+Author: Yoni Reichert
+Program name: Mini-Command-Server
+Description: Listens for commands and sends back dynamic responses.
+Date: 06-11-2023
+"""
+
 import socket
 import logging
 import datetime
@@ -13,8 +20,13 @@ logger = logging.getLogger('server')
 
 
 def handle_messages(client_socket):
-    # Handle client messages until 'exit'
-    response = ""
+    """
+    Handle client messages until 'exit' command is received.
+    @:param client_socket: The socket object associated with the client.
+    @:return: None
+    @:raises: socket.error if there's an error in receiving data.
+    """
+
     while True:
         client_input = client_socket.recv(4).decode()
         if client_input.lower() == 'exit':
@@ -36,16 +48,21 @@ def handle_messages(client_socket):
 
 
 def main():
+    """
+    Initialize the server socket, accept incoming connections, and handle messages.
+    @:return: None
+    @:raises: socket.error on socket-related errors, KeyboardInterrupt when user interrupts the process.
+    """
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         my_socket.bind(SERVER_ADDRESS)
         my_socket.listen(QUEUE_LEN)
-        logger.info(f"Server is listening on {SERVER_ADDRESS[0]}:{SERVER_ADDRESS[1]}")
+        logger.info(f"Server is listening on {SERVER_ADDRESS[0]}: {SERVER_ADDRESS[1]}")
         # Handle clients forever
         while True:
             client_socket, client_address = my_socket.accept()
             try:
-                logger.info(f"Accepted connection from {client_address[0]}:{client_address[1]}")
+                logger.info(f"Accepted connection from {client_address[0]}: {client_address[1]}")
                 handle_messages(client_socket)
             except socket.error as err:
                 logger.error('Received error while handling client: %s', err)
