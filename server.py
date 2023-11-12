@@ -19,7 +19,23 @@ logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime
 logger = logging.getLogger('server')
 
 
-def handle_messages(client_socket):
+def handle_message(message):
+    if message == 'time':
+        response = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    elif message == 'name':
+        response = "My name is Inigo Montoya"
+    elif message == "rand":
+        response = str(random.randint(1, 10))
+    else:
+        # server doesn't need to reply to un-valid message since client is responsible for checking
+        return False
+        logger.error("Client sent an unknown word: %s", message)
+
+    response = str(len(response)) + "!" + response
+    return response
+
+
+def handle_client(client_socket):
     """
     Handle client messages until 'exit' command is received.
     @:param client_socket: The socket object associated with the client.
@@ -33,17 +49,7 @@ def handle_messages(client_socket):
             client_socket.send("6!exited".encode())
             client_socket.close()
             return
-
-        if client_input.lower() == 'time':
-            response = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        elif client_input.lower() == 'name':
-            response = "My name is Inigo Montoya"
-        elif client_input.lower() == "rand":
-            response = str(random.randint(1, 10))
-        else:
-            response = "You sent an unknown word, please try again or type 'exit' to exit."
-            logger.error("Client sent an unknown word: %s", client_input)
-        response = str(len(response)) + "!" + response
+        response = handle_message(client_input.lower())
         client_socket.send(response.encode())
 
 
@@ -63,7 +69,7 @@ def main():
             client_socket, client_address = my_socket.accept()
             try:
                 logger.info(f"Accepted connection from {client_address[0]}: {client_address[1]}")
-                handle_messages(client_socket)
+                handle_client(client_socket)
             except socket.error as err:
                 logger.error('Received error while handling client: %s', err)
                 client_socket.close()

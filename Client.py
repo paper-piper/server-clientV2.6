@@ -54,6 +54,7 @@ def main():
     """
     assert(validate_message("time"))
     assert(not validate_message("t1m#"))
+    assert(not validate_message("neme"))
     assert(validate_message("exit"))
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -65,6 +66,8 @@ def main():
                 my_socket.send(message.encode())
                 response = get_message(my_socket)
                 print(response)
+            else:
+                print("You entered an un-valid message, try again or type 'exit' to exit")
     except socket.error as err:
         logger.error('Received socket error: %s', err)
     finally:
