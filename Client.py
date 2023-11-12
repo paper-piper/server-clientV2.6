@@ -59,6 +59,7 @@ def main():
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         my_socket.connect(SERVER_ADDRESS)
+        logger.info(f"Manage to connect to the server at: {SERVER_ADDRESS}")
         message = ""
         while message != "exit":
             message = input("Enter message: ")

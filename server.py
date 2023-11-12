@@ -27,9 +27,9 @@ def handle_message(message):
     elif message == "rand":
         response = str(random.randint(1, 10))
     else:
-        # server doesn't need to reply to un-valid message since client is responsible for checking
-        return False
-        logger.error("Client sent an unknown word: %s", message)
+        logger.error("Client sent unknown word")
+        response = "You sent an unknown command, try again or type 'exit' to exit"
+    # server doesn't need to check to un-valid message since client is responsible for checking
 
     response = str(len(response)) + "!" + response
     return response
@@ -40,7 +40,7 @@ def handle_client(client_socket):
     Handle client messages until 'exit' command is received.
     @:param client_socket: The socket object associated with the client.
     @:return: None
-    @:raises: socket.error if there's an error in receiving data.
+    @:raises: socket error if there's an error in receiving data.
     """
 
     while True:
@@ -59,6 +59,10 @@ def main():
     @:return: None
     @:raises: socket.error on socket-related errors, KeyboardInterrupt when user interrupts the process.
     """
+    assert len(handle_message("time")) == 22
+    assert 0 < int(handle_message("rand")[2]) < 10
+    assert handle_message("name") == "24!My name is Inigo Montoya"
+    assert len(handle_message("invalid message")) == 64
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         my_socket.bind(SERVER_ADDRESS)
