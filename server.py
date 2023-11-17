@@ -5,10 +5,13 @@ Description: Listens for commands and sends back dynamic responses.
 Date: 06-11-2023
 """
 
+import glob
 import socket
 import logging
-import datetime
-import random
+import os
+import shutil
+import subprocess
+import pyautogui
 
 MAX_PACKET = 1024
 QUEUE_LEN = 1
@@ -59,9 +62,10 @@ def parse_message(sock):
     return msg_type, msg_content
 
 
-def handle_client(client_socket):
+def handle_client_messages(client_socket):
     """
     Handle client messages until 'exit' command is received.
+    also contains all the function for the different server commands
     @:param client_socket: The socket object associated with the client.
     @:return: None
     @:raises: socket error if there's an error in receiving data.
@@ -81,7 +85,7 @@ def accept_client(server_socket):
     client_socket, client_address = server_socket.accept()
     try:
         logger.info(f"Accepted connection from {client_address[0]}: {client_address[1]}")
-        handle_client(client_socket)
+        handle_client_messages(client_socket)
     except socket.error as err:
         logger.error('Received error while handling client: %s', err)
         client_socket.close()
@@ -111,9 +115,39 @@ def main():
         logger.info("Server socket closed.")
 
 
+def dir_cmd(path):
+    return glob.glob(path + r"\*.*")
+
+
+def delete_cmd(path):
+    try:
+        os.remove(path)
+        return True
+    except:
+        return False
+
+
+def copy_cmd(copy_from, copy_to):
+    try:
+        shutil.copy(copy_from,copy_to)
+        return True
+    except:
+        return False
+
+
+def execute_cmd(path):
+    try:
+        subprocess.call(path)
+        return True
+    except:
+        return False
+
+
+def take_screenshot_cmd():
+
+
+
 if __name__ == "__main__":
-    assert len(process_request("time")) == 22
-    assert 0 < int(process_request("rand")[2]) < 10
-    assert process_request("name") == "24!My name is Inigo Montoya"
-    assert len(process_request("invalid message")) == 64
-    main()
+    pass
+    # Make new assertion checks
+    # main()
