@@ -17,21 +17,38 @@ SERVER_ADDRESS = ('127.0.0.1', 1729)
 logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('client')
 
-VALID_COMMANDS = ("time", "name", "rand", "exit")
+VALID_COMMANDS = ("dir", "delete", "copy", "execute", "take screenshot", "send photo")
 
 
-def get_message(my_socket):
+def parse_message(sock):
     """
-    Receive a message from the server socket based on a prefixed length.
-    @:param my_socket: The socket object connected to the server.
-    @:return: The message received from the server as a string.
-    @:raises: socket.error if there's an error in receiving data.
+    receives message from server and parses it
+    note: might need to change the .decode way
+    :param sock:
+    :return:
+    Messages protocol:
+    since message type is fixed (0-9) a separation symbol is not required
+    [message content length]![message type][message content]
+    0. Exit
+    1. ...
+
     """
-    length_str = ""
-    while (char := my_socket.recv(1).decode()) != "!":
-        length_str += char
-    message_len = int(length_str)
-    return my_socket.recv(message_len).decode()
+    len_str = ""
+    while (char := sock.recv(1).decode()) != "!":
+        len_str += char
+    msg_len = int(len_str)
+    msg_type = int(sock.recv(1).decode())
+    msg_content = sock.recv(msg_len).decode()
+    return msg_type, msg_content
+
+
+def send_message(sock):
+    pass
+
+
+def handle_response(response):
+    # Need to create functions for each response type
+    pass
 
 
 def validate_message(message):
@@ -40,15 +57,14 @@ def validate_message(message):
     @:param message: The message string to validate.
     @:return: True if message is valid, False otherwise.
     """
-    message = message.lower()  # for easier parsing
-    if message in VALID_COMMANDS:
+    if message.lower() in VALID_COMMANDS:
         return True
     # if message doesn't match any command, return un-valid
     logger.info(f"User tried to enter un-valid command, ({message})")
     return False
 
 
-def send_messages_to_server(client_socket):
+def send_messages_loop(client_socket):
     """
     send a message to the server and print response
     :param client_socket:
@@ -61,9 +77,9 @@ def send_messages_to_server(client_socket):
                 return
             # making sure the message is okay
             if validate_message(message):
-                client_socket.send(message.encode())
-                response = get_message(client_socket)
-                print(response)
+                send_message(client_socket)
+                response = parse_message(client_socket)
+                handle_response(response)
             else:
                 print("You entered an un-valid message, try again or type 'exit' to exit")
     except socket.error as err:
@@ -80,7 +96,7 @@ def main():
     try:
         client_socket.connect(SERVER_ADDRESS)
         logger.info(f"Managed to connect to the server at: {SERVER_ADDRESS}")
-        send_messages_to_server(client_socket)
+        send_messages_loop(client_socket)
     except socket.error as err:
         logger.error('Received socket error: %s', err)
     finally:

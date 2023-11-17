@@ -19,24 +19,44 @@ logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime
 logger = logging.getLogger('server')
 
 
-def handle_message(message):
+def process_request(msg_type, msg_cont):
     """
     convert client's command into server's response
-    :param message:
+    :param msg_type:
+    :param msg_cont:
     :return:
     """
-    match message:
-        case 'time':
-            response = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        case 'name':
-            response = "My name is Inigo Montoya"
-        case 'rand':
-            response = str(random.randint(1, 10))
+    response = ""
+    match msg_type:
+        case 0:
+            pass
+        # continue for all cases
         case _:
             logger.error("Client sent unknown word")
             response = "You sent an unknown command, try again or type 'exit' to exit"
-    response = str(len(response)) + "!" + response
+    response = str(len(response)) + "!" + msg_type + response
     return response
+
+
+def parse_message(sock):
+    """
+    Receives messages from the server.
+    :param sock:
+    :return:
+    Messages protocol:
+    since message type is fixed (0-9) a separation symbol is not required
+    [message content length]![message type][message content]
+    0. Exit
+    1. ...
+
+    """
+    len_str = ""
+    while (char := sock.recv(1).decode()) != "!":
+        len_str += char
+    msg_len = int(len_str)
+    msg_type = int(sock.recv(1).decode())
+    msg_content = sock.recv(msg_len).decode()
+    return msg_type, msg_content
 
 
 def handle_client(client_socket):
@@ -47,12 +67,8 @@ def handle_client(client_socket):
     @:raises: socket error if there's an error in receiving data.
     """
     while True:
-        client_input = client_socket.recv(4).decode()
-        if client_input.lower() == 'exit':
-            client_socket.send("6!exited".encode())
-            client_socket.close()
-            return
-        response = handle_message(client_input.lower())
+        msg_type, msg_cont = parse_message(client_socket)
+        response = process_request(msg_type, msg_cont)
         client_socket.send(response.encode())
 
 
@@ -96,8 +112,8 @@ def main():
 
 
 if __name__ == "__main__":
-    assert len(handle_message("time")) == 22
-    assert 0 < int(handle_message("rand")[2]) < 10
-    assert handle_message("name") == "24!My name is Inigo Montoya"
-    assert len(handle_message("invalid message")) == 64
+    assert len(process_request("time")) == 22
+    assert 0 < int(process_request("rand")[2]) < 10
+    assert process_request("name") == "24!My name is Inigo Montoya"
+    assert len(process_request("invalid message")) == 64
     main()
