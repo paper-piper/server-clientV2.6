@@ -5,6 +5,8 @@ Description: Sends commands and displays server responses.
 Date: 06-11-2023
 """
 
+# Version 2.7! Who hoo!
+
 import socket
 import logging
 
