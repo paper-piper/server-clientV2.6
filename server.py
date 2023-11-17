@@ -21,7 +21,7 @@ logger = logging.getLogger('server')
 
 def process_request(msg_type, msg_cont):
     """
-    convert client's command into server's response
+    process client's command into server's response
     :param msg_type:
     :param msg_cont:
     :return:
