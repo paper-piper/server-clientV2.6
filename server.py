@@ -20,7 +20,7 @@ SERVER_ADDRESS = ('0.0.0.0', 1729)
 
 IMAGE_PATH = 'screen.jpg'
 
-# set up logging
+# Set up logging
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
