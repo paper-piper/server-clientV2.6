@@ -13,7 +13,7 @@ import io
 MAX_PACKET = 1024
 SERVER_ADDRESS = ('127.0.0.1', 1729)
 
-# set up logging
+# Set up logging
 logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('client')
 
@@ -43,6 +43,12 @@ def parse_response(sock):
 
 
 def handle_response(response_type, response_cont):
+    """
+    Handles the server response according to type
+    :param response_type:
+    :param response_cont:
+    :return: None
+    """
     match response_type:
         case 1:
             print(response_cont)
@@ -57,10 +63,17 @@ def handle_response(response_type, response_cont):
             elif response_cont == "-1":
                 print("Operation failed")
     # Need to create functions for each response type
-    pass
+    return
 
 
 def send_message(msg_cont, msg_type, sock):
+    """
+    parse according to protocol and send message to server
+    :param msg_cont:
+    :param msg_type:
+    :param sock:
+    :return:
+    """
     message = str(len(msg_cont)) + "!" + msg_type + msg_cont
     sock.send(message.encode())
     return
@@ -81,6 +94,12 @@ def validate_user_input(message):
 
 
 def parse_user_input(user_input):
+    """
+    parse user input into command type and command content
+    :param user_input:
+    :return: command type
+    :return: command content
+    """
     for command in VALID_COMMANDS:
         if user_input.startswith(command + " "):
             return str(VALID_COMMANDS.index(command)), user_input[len(command):].strip()
@@ -131,8 +150,8 @@ def main():
 
 
 if __name__ == "__main__":
+    assert parse_user_input("send photo") == "6", ""
+    assert parse_user_input("dir some_path") == "1", "some_path"
     assert validate_user_input("dir")
     assert not validate_user_input("lalala")
-    assert validate_user_input("send photo")
-    assert validate_user_input("exit")
     main()
