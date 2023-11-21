@@ -20,7 +20,7 @@ SERVER_ADDRESS = ('0.0.0.0', 1729)
 
 IMAGE_PATH = 'screen.jpg'
 
-# set up logging
+# Set up logging
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
@@ -116,30 +116,6 @@ def accept_client(server_socket):
         client_socket.close()
 
 
-def main():
-    """
-    Initialize the server socket, accept incoming connections, and handle messages.
-    @:return: None
-    @:raises: socket error on socket-related errors, KeyboardInterrupt when user interrupts the process.
-    """
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        # Starting server
-        server_socket.bind(SERVER_ADDRESS)
-        server_socket.listen(QUEUE_LEN)
-        logger.info(f"Server is listening on {SERVER_ADDRESS[0]}: {SERVER_ADDRESS[1]}")
-        # listen to clients forever
-        while True:
-            accept_client(server_socket)
-    except socket.error as err:
-        logger.error('Received socket error on server socket: %s', err)
-    except KeyboardInterrupt:
-        logger.info("Server was terminated by the user.")
-    finally:
-        server_socket.close()
-        logger.info("Server socket closed.")
-
-
 def dir_cmd(path) -> str:
     return str(glob.glob(path + r"\*.*"))
 
@@ -166,6 +142,30 @@ def send_photo_cmd() -> bytes:
     with open(IMAGE_PATH, 'rb') as photo:
         image_bytes = photo.read()
     return image_bytes
+
+
+def main():
+    """
+    Initialize the server socket, accept incoming connections, and handle messages.
+    @:return: None
+    @:raises: socket error on socket-related errors, KeyboardInterrupt when user interrupts the process.
+    """
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        # Starting server
+        server_socket.bind(SERVER_ADDRESS)
+        server_socket.listen(QUEUE_LEN)
+        logger.info(f"Server is listening on {SERVER_ADDRESS[0]}: {SERVER_ADDRESS[1]}")
+        # listen to clients forever
+        while True:
+            accept_client(server_socket)
+    except socket.error as err:
+        logger.error('Received socket error on server socket: %s', err)
+    except KeyboardInterrupt:
+        logger.info("Server was terminated by the user.")
+    finally:
+        server_socket.close()
+        logger.info("Server socket closed.")
 
 
 if __name__ == "__main__":
