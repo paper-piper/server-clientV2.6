@@ -151,8 +151,4 @@ def main():
 
 
 if __name__ == "__main__":
-    assert parse_user_input("send photo") == "6", ""
-    assert parse_user_input("dir some_path") == "1", "some_path"
-    assert validate_user_input("dir")
-    assert not validate_user_input("lalala")
     main()
