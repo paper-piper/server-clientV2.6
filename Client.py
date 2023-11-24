@@ -18,6 +18,7 @@ logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime
 logger = logging.getLogger('client')
 
 VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take screenshot", "send photo")
+MESSAGE_SEPERATOR = "!"
 
 
 def parse_response(sock):
@@ -34,7 +35,7 @@ def parse_response(sock):
 
     """
     len_str = ""
-    while (char := sock.recv(1).decode()) != "!":
+    while (char := sock.recv(1).decode()) != MESSAGE_SEPERATOR:
         len_str += char
     msg_len = int(len_str)
     msg_type = int(sock.recv(1).decode())
@@ -43,6 +44,12 @@ def parse_response(sock):
 
 
 def handle_response(response_type, response_cont):
+    """
+    Handles the server response according to type
+    :param response_type:
+    :param response_cont:
+    :return: None
+    """
     match response_type:
         case 1:
             print(response_cont)
@@ -53,15 +60,22 @@ def handle_response(response_type, response_cont):
             image.show()
         case _:
             if response_cont == "0":
-                print("Operation was successful")
+                print(f"Operation {VALID_COMMANDS[response_type]} was successful")
             elif response_cont == "-1":
-                print("Operation failed")
+                print(f"Operation {VALID_COMMANDS[response_type]} failed")
     # Need to create functions for each response type
-    pass
+    return
 
 
 def send_message(msg_cont, msg_type, sock):
-    message = str(len(msg_cont)) + "!" + msg_type + msg_cont
+    """
+    parse according to protocol and send message to server
+    :param msg_cont:
+    :param msg_type:
+    :param sock:
+    :return:
+    """
+    message = str(len(msg_cont)) + MESSAGE_SEPERATOR + msg_type + msg_cont
     sock.send(message.encode())
     return
 
@@ -81,6 +95,12 @@ def validate_user_input(message):
 
 
 def parse_user_input(user_input):
+    """
+    parse user input into command type and command content
+    :param user_input:
+    :return: command type
+    :return: command content
+    """
     for command in VALID_COMMANDS:
         if user_input.startswith(command + " "):
             return str(VALID_COMMANDS.index(command)), user_input[len(command):].strip()
@@ -131,8 +151,4 @@ def main():
 
 
 if __name__ == "__main__":
-    assert validate_user_input("dir")
-    assert not validate_user_input("lalala")
-    assert validate_user_input("send photo")
-    assert validate_user_input("exit")
     main()

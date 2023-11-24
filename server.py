@@ -4,15 +4,11 @@ Program name: Mini-Command-Server
 Description: Listens for commands and sends back dynamic responses.
 Date: 06-11-2023
 """
+
 import base64
-import glob
 import socket
 import logging
-import os
-import shutil
-import subprocess
-import pyautogui
-import time
+import Commands
 
 MAX_PACKET = 1024
 QUEUE_LEN = 1
@@ -24,6 +20,9 @@ IMAGE_PATH = 'screen.jpg'
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
+MESSAGE_SEPARATOR = "!"
+VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take screenshot", "send photo")
+
 
 def process_request(msg_type, msg_cont):
     """
@@ -32,7 +31,16 @@ def process_request(msg_type, msg_cont):
     :param msg_cont:
     :return:
     """
-    response = None
+    try:
+        cmd = getattr(Commands, VALID_COMMANDS[msg_type] + "_cmd")
+        if msg_cont is None:
+            response = cmd()
+        else:
+            response = cmd(msg_cont)
+        if response is None:
+            response = "0"
+    except Exception as e:
+        response = f"-1"
     try:
         match msg_type:
             case 1:
@@ -54,10 +62,9 @@ def process_request(msg_type, msg_cont):
                 response = "You sent an unknown command, try again or type 'exit' to exit"
         if response is None:
             response = "0"
-    except:
-        response = "-1"
+
     finally:
-        response = str(len(response)) + "!" + str(msg_type) + response
+        response = str(len(response)) + MESSAGE_SEPARATOR + str(msg_type) + response
         return response
 
 
@@ -73,8 +80,9 @@ def parse_message(sock):
     1. ...
 
     """
+    # since client is responsible for validation of message, the server doesn't need to check
     len_str = ""
-    while (char := sock.recv(1).decode()) != "!":
+    while (char := sock.recv(1).decode()) != MESSAGE_SEPARATOR:
         len_str += char
     msg_len = int(len_str)
     msg_type = int(sock.recv(1).decode())
@@ -116,34 +124,6 @@ def accept_client(server_socket):
         client_socket.close()
 
 
-def dir_cmd(path) -> str:
-    return str(glob.glob(path + r"\*.*"))
-
-
-def delete_cmd(path):
-    os.remove(path)
-
-
-def copy_cmd(copy_from, copy_to):
-    shutil.copy(copy_from, copy_to)
-
-
-def execute_cmd(path):
-    subprocess.call(path)
-
-
-def take_screenshot_cmd():
-    time.sleep(5)
-    image = pyautogui.screenshot()
-    image.save(IMAGE_PATH)
-
-
-def send_photo_cmd() -> bytes:
-    with open(IMAGE_PATH, 'rb') as photo:
-        image_bytes = photo.read()
-    return image_bytes
-
-
 def main():
     """
     Initialize the server socket, accept incoming connections, and handle messages.
@@ -167,7 +147,8 @@ def main():
         server_socket.close()
         logger.info("Server socket closed.")
 
-
+def funn():
+    return
 if __name__ == "__main__":
     # Make new assertion checks
     main()
