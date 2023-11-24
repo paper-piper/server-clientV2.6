@@ -18,6 +18,7 @@ logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime
 logger = logging.getLogger('client')
 
 VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take screenshot", "send photo")
+MESSAGE_SEPERATOR = "!"
 
 
 def parse_response(sock):
@@ -34,7 +35,7 @@ def parse_response(sock):
 
     """
     len_str = ""
-    while (char := sock.recv(1).decode()) != "!":
+    while (char := sock.recv(1).decode()) != MESSAGE_SEPERATOR:
         len_str += char
     msg_len = int(len_str)
     msg_type = int(sock.recv(1).decode())
@@ -59,9 +60,9 @@ def handle_response(response_type, response_cont):
             image.show()
         case _:
             if response_cont == "0":
-                print("Operation was successful")
+                print(f"Operation {VALID_COMMANDS[response_type]} was successful")
             elif response_cont == "-1":
-                print("Operation failed")
+                print(f"Operation {VALID_COMMANDS[response_type]} failed")
     # Need to create functions for each response type
     return
 
@@ -74,7 +75,7 @@ def send_message(msg_cont, msg_type, sock):
     :param sock:
     :return:
     """
-    message = str(len(msg_cont)) + "!" + msg_type + msg_cont
+    message = str(len(msg_cont)) + MESSAGE_SEPERATOR + msg_type + msg_cont
     sock.send(message.encode())
     return
 

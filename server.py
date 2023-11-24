@@ -24,6 +24,7 @@ IMAGE_PATH = 'screen.jpg'
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
+MESSAGE_SEPERATOR = "!"
 
 def process_request(msg_type, msg_cont):
     """
@@ -57,7 +58,7 @@ def process_request(msg_type, msg_cont):
     except:
         response = "-1"
     finally:
-        response = str(len(response)) + "!" + str(msg_type) + response
+        response = str(len(response)) + MESSAGE_SEPERATOR + str(msg_type) + response
         return response
 
 
@@ -73,8 +74,9 @@ def parse_message(sock):
     1. ...
 
     """
+    # since client is responsible for validation of message, the server doesn't need to check
     len_str = ""
-    while (char := sock.recv(1).decode()) != "!":
+    while (char := sock.recv(1).decode()) != MESSAGE_SEPERATOR:
         len_str += char
     msg_len = int(len_str)
     msg_type = int(sock.recv(1).decode())
