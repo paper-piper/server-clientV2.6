@@ -17,7 +17,7 @@ SERVER_ADDRESS = ('127.0.0.1', 1729)
 logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('client')
 
-VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take screenshot", "send photo")
+VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take screenshot", "send photo", "update server")
 MESSAGE_SEPERATOR = "!"
 
 
@@ -26,21 +26,19 @@ def parse_response(sock):
     receives message from server and parses it
     :param sock:
     :return:
-    Messages protocol:
-    since message type is fixed (0-9) a separation symbol is not required
-    [message content length]![message type][message content]
-    0. Exit
-    1. dir
-    ...
-
+    Messages structure:
+    [cont_len]![cmd_type][cmd_cont]
     """
-    len_str = ""
-    while (char := sock.recv(1).decode()) != MESSAGE_SEPERATOR:
-        len_str += char
-    msg_len = int(len_str)
-    msg_type = int(sock.recv(1).decode())
-    msg_content = sock.recv(msg_len).decode()
-    return msg_type, msg_content
+    try:
+        len_str = ""
+        while (char := sock.recv(1).decode()) != MESSAGE_SEPERATOR:
+            len_str += char
+        msg_len = int(len_str)
+        msg_type = int(sock.recv(1).decode())
+        msg_content = sock.recv(msg_len)
+        return msg_type, msg_content
+    except Exception as e:
+        logger.error("Failed to parse message")
 
 
 def handle_response(response_type, response_cont):
@@ -50,19 +48,23 @@ def handle_response(response_type, response_cont):
     :param response_cont:
     :return: None
     """
+    # check if message failed
+
+    # need to find a way how to not crash and not execute if the command failed.
+    # if response_cont.decode() == "-1":
+    #     print(f"Operation {VALID_COMMANDS[response_type]} failed")
+
     match response_type:
         case 1:
             print(response_cont)
         case 6:
-            image_bytes = base64.b64decode(response_cont)
-            image = Image.open(io.BytesIO(image_bytes))
+            image = Image.open(io.BytesIO(response_cont))
             # Display the image
             image.show()
         case _:
-            if response_cont == "0":
+            if response_cont.decode() == "0":
                 print(f"Operation {VALID_COMMANDS[response_type]} was successful")
-            elif response_cont == "-1":
-                print(f"Operation {VALID_COMMANDS[response_type]} failed")
+
     # Need to create functions for each response type
     return
 
@@ -116,14 +118,19 @@ def send_messages_loop(client_socket):
     :return:
     """
     try:
+        print("Choose one of the following commands:")
+        for cmd in VALID_COMMANDS:
+            print(f"{cmd}, ", end="")
+        print("")
         while True:
-            message = input("Enter message:")
+            message = input("Enter message: ")
             if message == 'exit':
                 return
             # validate message
             if validate_user_input(message):
                 msg_type, msg_content = parse_user_input(message)
                 send_message(msg_content, msg_type, client_socket)
+                # response_cont here is bytes, not string
                 response_type, response_cont = parse_response(client_socket)
                 handle_response(response_type, response_cont)
             else:

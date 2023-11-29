@@ -6,10 +6,12 @@ import time
 import glob
 
 IMAGE_PATH = 'screen.jpg'
+VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take_screenshot", "send_photo")
 
 
-def dir_cmd(path) -> str:
-    return str(glob.glob(path + r"\*.*"))
+def dir_cmd(path) -> bytes:
+    items = glob.glob(path + r"\*.*")
+    return ''.join(items).encode()
 
 
 def delete_cmd(path):
@@ -25,7 +27,6 @@ def execute_cmd(path):
 
 
 def take_screenshot_cmd():
-    time.sleep(5)
     image = pyautogui.screenshot()
     image.save(IMAGE_PATH)
 
@@ -34,3 +35,6 @@ def send_photo_cmd() -> bytes:
     with open(IMAGE_PATH, 'rb') as photo:
         image_bytes = photo.read()
     return image_bytes
+
+def print_hello():
+    print("hello")

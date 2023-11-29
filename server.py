@@ -5,67 +5,74 @@ Description: Listens for commands and sends back dynamic responses.
 Date: 06-11-2023
 """
 
-import base64
 import socket
 import logging
+import importlib
 import Commands
+
 
 MAX_PACKET = 1024
 QUEUE_LEN = 1
 SERVER_ADDRESS = ('0.0.0.0', 1729)
 
 IMAGE_PATH = 'screen.jpg'
+COMMANDS_FILE_PATH = "Commands.py"
 
 # Set up logging
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
 MESSAGE_SEPARATOR = "!"
-VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take screenshot", "send photo")
 
 
-def process_request(msg_type, msg_cont):
+def update_commands_file(new_file_content):
+    # global Commands
+    try:
+
+        with open(COMMANDS_FILE_PATH, 'w') as commands_file:
+            commands_file.write(new_file_content)
+        importlib.reload(Commands)
+        logger.info(f"Successfully updated '{COMMANDS_FILE_PATH}' with content from the new client's content.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def process_request(cmd_type, cmd_cont):
     """
     process client's command into server's response
-    :param msg_type:
-    :param msg_cont:
+    :param cmd_type:
+    :param cmd_cont:
     :return:
     """
+    cmd_content = None
     try:
-        cmd = getattr(Commands, VALID_COMMANDS[msg_type] + "_cmd")
-        if msg_cont is None:
-            response = cmd()
+        cmd = getattr(Commands, Commands.VALID_COMMANDS[cmd_type] + "_cmd")
+        if cmd_cont is None or cmd_cont == "":
+            cmd_content = cmd()
         else:
-            response = cmd(msg_cont)
-        if response is None:
-            response = "0"
+            cmd_content = cmd(cmd_cont)
     except Exception as e:
-        response = f"-1"
-    try:
-        match msg_type:
-            case 1:
-                response = dir_cmd(msg_cont)
-            case 2:
-                delete_cmd(msg_cont)
-            case 3:
-                copy_cmd(msg_cont.split(" ")[0], msg_cont.split(" ")[1])
-            case 4:
-                execute_cmd(msg_cont)
-            case 5:
-                take_screenshot_cmd()
-            case 6:
-                image_bytes = send_photo_cmd()
-                response = base64.b64encode(image_bytes).decode('utf-8')
-            # continue for all cases
-            case _:
-                logger.error("Client sent unknown word")
-                response = "You sent an unknown command, try again or type 'exit' to exit"
-        if response is None:
-            response = "0"
-
+        logger.error(f"Failed while trying to processed command: {Commands.VALID_COMMANDS[cmd_type]}. Error: {e}")
+        cmd_content = "-1".encode()
     finally:
-        response = str(len(response)) + MESSAGE_SEPARATOR + str(msg_type) + response
-        return response
+        return cmd_content
+
+
+def send_message(sock, msg_cont, cmd_id):
+    """
+    parse according to protocol and send message to server
+    :param sock: Socket
+    :param msg_cont:
+    :param cmd_id:
+    :return:
+    """
+    # [content len]![cmd id][content]
+    if msg_cont is None:
+        message = "1".encode() + MESSAGE_SEPARATOR.encode() + cmd_id.encode() + "0".encode()  # 0 means successes
+    else:
+        message = str(len(msg_cont)).encode() + MESSAGE_SEPARATOR.encode() + cmd_id.encode() + msg_cont
+    sock.send(message)
+    return
 
 
 def parse_message(sock):
@@ -99,14 +106,13 @@ def handle_client_messages(client_socket):
     @:raises: socket error if there's an error in receiving data.
     """
     while True:
-        msg_type, msg_cont = parse_message(client_socket)
+        cmd_id, request_cont = parse_message(client_socket)
         # check if client exited
-        if msg_type == 0:
+        if cmd_id == 0:
             client_socket.close()
             return
-        response = process_request(msg_type, msg_cont)
-        if response is not None:
-            client_socket.send(response.encode())
+        cmd_content = process_request(cmd_id, request_cont)
+        send_message(client_socket, cmd_content, str(cmd_id))
 
 
 def accept_client(server_socket):
@@ -147,8 +153,9 @@ def main():
         server_socket.close()
         logger.info("Server socket closed.")
 
-def funn():
-    return
+
 if __name__ == "__main__":
     # Make new assertion checks
-    main()
+    print_helloo = getattr(Commands, "print_hello")
+    print_helloo()
+    # main()
