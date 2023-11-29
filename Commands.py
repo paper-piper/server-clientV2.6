@@ -8,7 +8,7 @@ import glob
 IMAGE_PATH = 'screen.jpg'
 VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take_screenshot", "send_photo")
 
-
+# s
 def dir_cmd(path) -> bytes:
     items = glob.glob(path + r"\*.*")
     return ''.join(items).encode()

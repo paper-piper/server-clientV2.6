@@ -18,7 +18,7 @@ SERVER_ADDRESS = ('0.0.0.0', 1729)
 IMAGE_PATH = 'screen.jpg'
 COMMANDS_FILE_PATH = "Commands.py"
 
-# Set up logging
+# set up logging
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
