@@ -4,7 +4,6 @@ Program name: Mini-Command-Client
 Description: Sends commands and displays server responses.
 Date: 06-11-2023
 """
-import base64
 import socket
 import logging
 from PIL import Image
@@ -17,8 +16,8 @@ SERVER_ADDRESS = ('127.0.0.1', 1729)
 logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('client')
 
-VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take screenshot", "send photo", "update server")
-MESSAGE_SEPERATOR = "!"
+VALID_COMMANDS = ("exit", "update commands", "dir", "delete", "copy", "execute", "take screenshot", "send photo", "update server")
+MESSAGE_SEPARATOR = "!"
 
 
 def parse_response(sock):
@@ -31,7 +30,7 @@ def parse_response(sock):
     """
     try:
         len_str = ""
-        while (char := sock.recv(1).decode()) != MESSAGE_SEPERATOR:
+        while (char := sock.recv(1).decode()) != MESSAGE_SEPARATOR:
             len_str += char
         msg_len = int(len_str)
         msg_type = int(sock.recv(1).decode())
@@ -55,9 +54,9 @@ def handle_response(response_type, response_cont):
     #     print(f"Operation {VALID_COMMANDS[response_type]} failed")
 
     match response_type:
-        case 1:
+        case 2: # dir
             print(response_cont)
-        case 6:
+        case 7: # send photo
             image = Image.open(io.BytesIO(response_cont))
             # Display the image
             image.show()
@@ -77,7 +76,7 @@ def send_message(msg_cont, msg_type, sock):
     :param sock:
     :return:
     """
-    message = str(len(msg_cont)) + MESSAGE_SEPERATOR + msg_type + msg_cont
+    message = str(len(msg_cont)) + MESSAGE_SEPARATOR + msg_type + msg_cont
     sock.send(message.encode())
     return
 

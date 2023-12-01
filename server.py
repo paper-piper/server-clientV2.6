@@ -8,7 +8,7 @@ Date: 06-11-2023
 import socket
 import logging
 import importlib
-import Commands
+import ServerCommands
 
 
 MAX_PACKET = 1024
@@ -16,22 +16,23 @@ QUEUE_LEN = 1
 SERVER_ADDRESS = ('0.0.0.0', 1729)
 
 IMAGE_PATH = 'screen.jpg'
-COMMANDS_FILE_PATH = "Commands.py"
+COMMANDS_FILE_PATH = "ServerCommands.py"
 
 # set up logging
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('server')
 
 MESSAGE_SEPARATOR = "!"
+SUCCESS_CHAR = "0"
+FAIL_CHAR = "-1"
+UPDATE_SERVER_CMD = 1
 
 
 def update_commands_file(new_file_content):
-    # global Commands
     try:
-
-        with open(COMMANDS_FILE_PATH, 'w') as commands_file:
+        with open(COMMANDS_FILE_PATH, 'a') as commands_file:
             commands_file.write(new_file_content)
-        importlib.reload(Commands)
+        importlib.reload(ServerCommands)
         logger.info(f"Successfully updated '{COMMANDS_FILE_PATH}' with content from the new client's content.")
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -44,16 +45,21 @@ def process_request(cmd_type, cmd_cont):
     :param cmd_cont:
     :return:
     """
+    # check if the request is to update the server
+    if cmd_type == UPDATE_SERVER_CMD:
+        update_commands_file(cmd_cont)
+        return SUCCESS_CHAR
+
     cmd_content = None
     try:
-        cmd = getattr(Commands, Commands.VALID_COMMANDS[cmd_type] + "_cmd")
+        cmd = getattr(ServerCommands, ServerCommands.VALID_COMMANDS[cmd_type] + "_cmd")
         if cmd_cont is None or cmd_cont == "":
             cmd_content = cmd()
         else:
             cmd_content = cmd(cmd_cont)
     except Exception as e:
-        logger.error(f"Failed while trying to processed command: {Commands.VALID_COMMANDS[cmd_type]}. Error: {e}")
-        cmd_content = "-1".encode()
+        logger.error(f"Failed while trying to processed command: {ServerCommands.VALID_COMMANDS[cmd_type]}. Error: {e}")
+        cmd_content = FAIL_CHAR.encode()
     finally:
         return cmd_content
 
@@ -68,7 +74,7 @@ def send_message(sock, msg_cont, cmd_id):
     """
     # [content len]![cmd id][content]
     if msg_cont is None:
-        message = "1".encode() + MESSAGE_SEPARATOR.encode() + cmd_id.encode() + "0".encode()  # 0 means successes
+        message = "1".encode() + MESSAGE_SEPARATOR.encode() + cmd_id.encode() + SUCCESS_CHAR.encode()
     else:
         message = str(len(msg_cont)).encode() + MESSAGE_SEPARATOR.encode() + cmd_id.encode() + msg_cont
     sock.send(message)
@@ -156,6 +162,4 @@ def main():
 
 if __name__ == "__main__":
     # Make new assertion checks
-    print_helloo = getattr(Commands, "print_hello")
-    print_helloo()
-    # main()
+    main()
