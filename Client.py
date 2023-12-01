@@ -8,6 +8,7 @@ import socket
 import logging
 from PIL import Image
 import io
+import ClientCommands
 
 MAX_PACKET = 1024
 SERVER_ADDRESS = ('127.0.0.1', 1729)
@@ -16,7 +17,6 @@ SERVER_ADDRESS = ('127.0.0.1', 1729)
 logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('client')
 
-VALID_COMMANDS = ("exit", "update commands", "dir", "delete", "copy", "execute", "take screenshot", "send photo", "update server")
 MESSAGE_SEPARATOR = "!"
 
 
@@ -62,7 +62,7 @@ def handle_response(response_type, response_cont):
             image.show()
         case _:
             if response_cont.decode() == "0":
-                print(f"Operation {VALID_COMMANDS[response_type]} was successful")
+                print(f"Operation {ClientCommands.VALID_COMMANDS[response_type]} was successful")
 
     # Need to create functions for each response type
     return
@@ -87,7 +87,7 @@ def validate_user_input(message):
     @:param message: The message string to validate.
     @:return: True if message is valid, False otherwise.
     """
-    for command in VALID_COMMANDS:
+    for command in ClientCommands.VALID_COMMANDS:
         if message.startswith(command):
             return True
     # if message doesn't match any command, return un-valid
@@ -102,11 +102,11 @@ def parse_user_input(user_input):
     :return: command type
     :return: command content
     """
-    for command in VALID_COMMANDS:
+    for command in ClientCommands.VALID_COMMANDS:
         if user_input.startswith(command + " "):
-            return str(VALID_COMMANDS.index(command)), user_input[len(command):].strip()
+            return str(ClientCommands.VALID_COMMANDS.index(command)), user_input[len(command):].strip()
         elif user_input == command:  # Check for commands without additional content
-            return str(VALID_COMMANDS.index(command)), ""
+            return str(ClientCommands.VALID_COMMANDS.index(command)), ""
     # don't need to check for invalid input, since we already checked that
 
 
@@ -118,7 +118,7 @@ def send_messages_loop(client_socket):
     """
     try:
         print("Choose one of the following commands:")
-        for cmd in VALID_COMMANDS:
+        for cmd in ClientCommands.VALID_COMMANDS:
             print(f"{cmd}, ", end="")
         print("")
         while True:
@@ -128,6 +128,10 @@ def send_messages_loop(client_socket):
             # validate message
             if validate_user_input(message):
                 msg_type, msg_content = parse_user_input(message)
+                if msg_type == ClientCommands.VALID_COMMANDS.index("update commands"):
+                    # check client code validation
+                    pass
+
                 send_message(msg_content, msg_type, client_socket)
                 # response_cont here is bytes, not string
                 response_type, response_cont = parse_response(client_socket)

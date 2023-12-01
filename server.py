@@ -28,10 +28,11 @@ FAIL_CHAR = "-1"
 UPDATE_SERVER_CMD = 1
 
 
-def update_commands_file(new_file_content):
+def update_commands_file(new_commands_content):
+    # since client is responsible for checking the validation of the code, the server doesn't need to
     try:
         with open(COMMANDS_FILE_PATH, 'a') as commands_file:
-            commands_file.write(new_file_content)
+            commands_file.write(new_commands_content)
         importlib.reload(ServerCommands)
         logger.info(f"Successfully updated '{COMMANDS_FILE_PATH}' with content from the new client's content.")
     except Exception as e:
@@ -162,4 +163,5 @@ def main():
 
 if __name__ == "__main__":
     # Make new assertion checks
+
     main()
