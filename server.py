@@ -4,8 +4,7 @@ Program name: Mini-Command-Server
 Description: Listens for commands and sends back dynamic responses.
 Date: 06-11-2023
 """
-
-
+import base64
 import glob
 import socket
 import logging
@@ -13,10 +12,15 @@ import os
 import shutil
 import subprocess
 import pyautogui
+import time
+
+# Need to change dir re return parsed list (look nice)
 
 MAX_PACKET = 1024
 QUEUE_LEN = 1
 SERVER_ADDRESS = ('0.0.0.0', 1729)
+
+IMAGE_PATH = 'screen.jpg'
 
 # Set up logging
 logging.basicConfig(filename='server.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -30,16 +34,34 @@ def process_request(msg_type, msg_cont):
     :param msg_cont:
     :return:
     """
-    response = ""
-    match msg_type:
-        case 0:
-            pass
-        # continue for all cases
-        case _:
-            logger.error("Client sent unknown word")
-            response = "You sent an unknown command, try again or type 'exit' to exit"
-    response = str(len(response)) + "!" + msg_type + response
-    return response
+    response = None
+    try:
+        match msg_type:
+            case 1:
+                response = dir_cmd(msg_cont)
+            case 2:
+                delete_cmd(msg_cont)
+            case 3:
+                copy_cmd(msg_cont.split(" ")[0], msg_cont.split(" ")[1])
+            case 4:
+                execute_cmd(msg_cont)
+            case 5:
+                take_screenshot_cmd()
+            case 6:
+                image_bytes = send_photo_cmd()
+                response = base64.b64encode(image_bytes).decode('utf-8')
+            # continue for all cases
+            case _:
+                logger.error("Client sent unknown word")
+                response = "You sent an unknown command, try again or type 'exit' to exit"
+        if response is None:
+            response = "0"
+    except Exception as e:
+        logger.error(f"Server Failed to create a response, ({e})")
+        response = "-1"
+    finally:
+        response = str(len(response)) + "!" + str(msg_type) + response
+        return response
 
 
 def parse_message(sock):
@@ -73,8 +95,13 @@ def handle_client_messages(client_socket):
     """
     while True:
         msg_type, msg_cont = parse_message(client_socket)
+        # check if client exited
+        if msg_type == 0:
+            client_socket.close()
+            return
         response = process_request(msg_type, msg_cont)
-        client_socket.send(response.encode())
+        if response is not None:
+            client_socket.send(response.encode())
 
 
 def accept_client(server_socket):
@@ -92,11 +119,39 @@ def accept_client(server_socket):
         client_socket.close()
 
 
+def dir_cmd(path) -> str:
+    return str(glob.glob(path + r"\*.*"))
+
+
+def delete_cmd(path):
+    os.remove(path)
+
+
+def copy_cmd(copy_from, copy_to):
+    shutil.copy(copy_from, copy_to)
+
+
+def execute_cmd(path):
+    subprocess.call(path)
+
+
+def take_screenshot_cmd():
+    time.sleep(5)
+    image = pyautogui.screenshot()
+    image.save(IMAGE_PATH)
+
+
+def send_photo_cmd() -> bytes:
+    with open(IMAGE_PATH, 'rb') as photo:
+        image_bytes = photo.read()
+    return image_bytes
+
+
 def main():
     """
     Initialize the server socket, accept incoming connections, and handle messages.
     @:return: None
-    @:raises: socket.error on socket-related errors, KeyboardInterrupt when user interrupts the process.
+    @:raises: socket error on socket-related errors, KeyboardInterrupt when user interrupts the process.
     """
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
@@ -116,39 +171,6 @@ def main():
         logger.info("Server socket closed.")
 
 
-def dir_cmd(path):
-    return glob.glob(path + r"\*.*")
-
-
-def delete_cmd(path):
-    try:
-        os.remove(path)
-        return True
-    except:
-        return False
-
-
-def copy_cmd(copy_from, copy_to):
-    try:
-        shutil.copy(copy_from,copy_to)
-        return True
-    except:
-        return False
-
-
-def execute_cmd(path):
-    try:
-        subprocess.call(path)
-        return True
-    except:
-        return False
-
-
-def take_screenshot_cmd():
-
-
-
 if __name__ == "__main__":
-    pass
     # Make new assertion checks
-    # main()
+    main()
