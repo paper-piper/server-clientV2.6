@@ -14,7 +14,7 @@ import subprocess
 import pyautogui
 import time
 
-# Need to change dir re return parsed list (look nice)
+# need to change dir re return parsed list (look nice)
 
 MAX_PACKET = 1024
 QUEUE_LEN = 1

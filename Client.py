@@ -10,7 +10,7 @@ import logging
 from PIL import Image
 import io
 
-# Need to print all commands types at the start
+# need to print all commands types at the start
 
 MAX_PACKET = 1024
 SERVER_ADDRESS = ('127.0.0.1', 1729)
